@@ -3,6 +3,15 @@ from flask import Flask, render_template, request, redirect, url_for
 from werkzeug.utils import secure_filename
 from processing.tumor_detector import TumorDetector
 from processing.image_processor import generate_visualizations
+import sys
+import numpy
+import scipy
+import tensorflow
+
+print('Python version:', sys.version)
+print('Numpy version:', numpy.__version__)
+print('Scipy version:', scipy.__version__)
+print('Tensorflow version:', tensorflow.__version__)
 
 app = Flask(__name__)
 
