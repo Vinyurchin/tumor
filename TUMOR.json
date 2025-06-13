@@ -1,0 +1,179 @@
+{
+  "name": "TUMOR",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "upload-image",
+        "options": {}
+      },
+      "id": "6e5c159d-fc25-4315-b98e-5c1f254eee13",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "e44efc71-51e8-4a01-bb60-6d8067c37254"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Si el archivo viene en binary.data, renómbralo a binary.file\nif (items[0].binary && items[0].binary.data && !items[0].binary.file) {\n  items[0].binary.file = items[0].binary.data;\n  delete items[0].binary.data;\n}\nreturn items;"
+      },
+      "id": "30769b97-cead-4699-b1dc-3d1c440c27d2",
+      "name": "Renombrar binary a file",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "http://172.20.10.5:5000/api/upload",
+        "jsonParameters": true,
+        "options": {
+          "bodyContentType": "multipart-form-data"
+        },
+        "sendBinaryData": true,
+        "binaryPropertyName": "file"
+      },
+      "id": "8092c621-fc49-4f56-a363-fce81a2d01d6",
+      "name": "Enviar a API Flask",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        400,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const result = $json[\"result\"] || \"No Result\";\nconst tumorDetected = result === \"Tumor Detected\";\nreturn [{ json: { tumorDetected, result, image_base64: $json[\"image_base64\"] } }];"
+      },
+      "id": "239e9c19-7898-4278-848a-d4c16de9688b",
+      "name": "Interpretar resultado",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        600,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json[\"tumorDetected\"]}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "86936525-7e4e-4fd3-9a56-7ae53f02e536",
+      "name": "¿Tumor Detectado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        800,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "5b8c0d34-0b5f-4f6d-b9d8-7a71aa97bada",
+      "name": "Mostrar Resultado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        0
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Renombrar binary a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Renombrar binary a file": {
+      "main": [
+        [
+          {
+            "node": "Enviar a API Flask",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar a API Flask": {
+      "main": [
+        [
+          {
+            "node": "Interpretar resultado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Interpretar resultado": {
+      "main": [
+        [
+          {
+            "node": "¿Tumor Detectado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Tumor Detectado?": {
+      "main": [
+        [
+          {
+            "node": "Mostrar Resultado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mostrar Resultado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveExecutionProgress": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "7d33db93-c5c8-46ae-bc46-56a8826d7abd",
+  "meta": {
+    "instanceId": "20c50ee87d1364ee05daebc6278b4f7fe0304e0b62e6096b757d5b01e9b4ec9e"
+  },
+  "id": "9fEMVdZltG3t64YJ",
+  "tags": []
+}
